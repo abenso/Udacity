@@ -64,16 +64,16 @@ void process_image_callback(const sensor_msgs::Image img)
     // Divide the image in three parts and then count in each part the numbers of white points
 
 	// Define the number of pixels in each part
-	steps_center = int(img.step*center_perc/100);
-	steps_side = int(img.step*(100 - center_perc)/2/100);
+	steps_center = int(img.width*center_perc/100);
+	steps_side = int(img.width*(100 - center_perc)/2/100);
 
 	// Count the number of white pixels in each part
 	c_left = 0;
 	c_center = 0;
 	c_right = 0;
     for (int i = 0; i < img.height; i++) {
-		for(int j = 0; j < img.step; j++) {
-			if(img.data[i*img.step + j] == white_pixel) {
+		for(int j = 0; j < img.width; j++) {
+			if(img.data[i*img.height + j*3] == white_pixel && img.data[i*img.height + j*3 + 1] == white_pixel && img.data[i*img.height + j*3 + 2] == white_pixel) {
 				if (j < steps_side) {
 					c_left++;
 				} else {
@@ -88,7 +88,7 @@ void process_image_callback(const sensor_msgs::Image img)
     }
 
 	// calc number of white pixels to stop the robot
-	stop_cont = img.data.size() * stop_perc;	
+	stop_cont = img.data.size() * stop_perc / 3;	
 
 	// get maximun speeds from Parameter Server
 	std::vector<float> max_speed = get_maximum_speed();
