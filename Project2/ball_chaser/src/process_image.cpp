@@ -73,7 +73,7 @@ void process_image_callback(const sensor_msgs::Image img)
 	c_right = 0;
     for (int i = 0; i < img.height; i++) {
 		for(int j = 0; j < img.width; j++) {
-			if(img.data[i*img.height + j*3] == white_pixel && img.data[i*img.height + j*3 + 1] == white_pixel && img.data[i*img.height + j*3 + 2] == white_pixel) {
+			if(img.data[i*img.step + j*3] == white_pixel && img.data[i*img.step + j*3 + 1] == white_pixel && img.data[i*img.step + j*3 + 2] == white_pixel) {
 				if (j < steps_side) {
 					c_left++;
 				} else {
