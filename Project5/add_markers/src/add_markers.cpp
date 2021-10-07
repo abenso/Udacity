@@ -1,123 +1,108 @@
-// %Tag(FULLTEXT)%
-// %Tag(INCLUDES)%
+
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <nav_msgs/Odometry.h>
-// %EndTag(INCLUDES)%
-bool picked = false;
-bool dropped = false;
-void odom_callback (const nav_msgs::Odometry::ConstPtr& msg){
-  double x = msg->pose.pose.position.x;
-  double y = msg->pose.pose.position.y;
 
-  if(x >= -2.5 && x <= -1.5 && y >= 0.0 && y <= 0.1){
-    picked = true;
-  }
-  if (x >= -3.5 && x <= -2.5 && y >= -3.5 && y <= -2.5){
-    dropped = true;
-  }
-}
-// %Tag(INIT)%
-int main( int argc, char** argv )
+class AddMarker
 {
-  ros::init(argc, argv, "basic_shapes");
+private:
   ros::NodeHandle n;
-  ros::Rate r(1);
-  ros::Subscriber sub = n.subscribe("odom", 10, odom_callback);
-  ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-// %EndTag(INIT)%
+  ros::Publisher marker_pub;
+  ros::Subscriber odom_sub;
+  visualization_msgs::Marker marker;
+  double init[2] = {-2.0, 5.0};
+  double end[2] = {-0.5, -3.0};
+  double delta;
+  const int mul= 2;
 
-  // Set our initial shape type to be a cube
-// %Tag(SHAPE_INIT)%
-  uint32_t shape = visualization_msgs::Marker::CUBE;
-// %EndTag(SHAPE_INIT)%
+public:
+  AddMarker() {
 
-// %Tag(MARKER_INIT)%
-  while (ros::ok())
-  {
-    visualization_msgs::Marker marker;
+    marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    odom_sub = n.subscribe("/odom", 1, &AddMarker::odomCallback, this);
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
     marker.header.frame_id = "/map";
     marker.header.stamp = ros::Time::now();
-// %EndTag(MARKER_INIT)%
-
     // Set the namespace and id for this marker.  This serves to create a unique ID
     // Any marker sent with the same namespace and id will overwrite the old one
-// %Tag(NS_ID)%
-    marker.ns = "basic_shapes";
+    marker.ns = "add_markers";
     marker.id = 0;
-// %EndTag(NS_ID)%
 
     // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
-// %Tag(TYPE)%
-    marker.type = shape;
-// %EndTag(TYPE)%
-    if (picked == false && dropped == false) {
+    marker.type = visualization_msgs::Marker::CUBE;
+
     // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
-// %Tag(ACTION)%
-        marker.action = visualization_msgs::Marker::ADD;
-// %EndTag(ACTION)%
+    marker.action = visualization_msgs::Marker::ADD;
 
     // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-// %Tag(POSE)%
-        marker.pose.position.x = -2.0;
-        marker.pose.position.y = 0.5;
-        marker.pose.position.z = 0;
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-// %EndTag(POSE)%
-
+    marker.pose.position.x = init[0];
+    marker.pose.position.y = init[1];
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
     // Set the scale of the marker -- 1x1x1 here means 1m on a side
-// %Tag(SCALE)%
-        marker.scale.x = .2;
-        marker.scale.y = .2;
-        marker.scale.z = .2;
-// %EndTag(SCALE)%
+    marker.scale.x = 0.3;
+    marker.scale.y = 0.3;
+    marker.scale.z = 0.3;
 
     // Set the color -- be sure to set alpha to something non-zero!
-// %Tag(COLOR)%
-        marker.color.r = 0.0f;
-        marker.color.g = 0.0f;
-        marker.color.b = 1.0f;
-        marker.color.a = 1.0;
-// %EndTag(COLOR)%
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+    marker.lifetime = ros::Duration();
+    
+    delta = marker.scale.x;
 
     // Publish the marker
-// %Tag(PUBLISH)%
-        while (marker_pub.getNumSubscribers() < 1)
-        {
-          if (!ros::ok())
-          {
-            return 0;
-          }
-          ROS_WARN_ONCE("Please create a subscriber to the marker");
-          sleep(1);
-        }
-        marker_pub.publish(marker);
+    while (marker_pub.getNumSubscribers() < 1)
+    {
+      ROS_WARN("Please create a subscriber to the marker");
+      sleep(1);
     }
-// %EndTag(PUBLISH)%
-    ros::spin();
-    if (picked == true) {
-     marker.action = visualization_msgs::Marker::DELETE;
-     marker_pub.publish(marker);
-    }
-    if (dropped == true) {
-      marker.action = visualization_msgs::Marker::ADD;
-      marker.pose.position.x = -3.0;
-      marker.pose.position.y = -3.0;
-      marker.pose.position.z = 0;
-      marker.pose.orientation.x = 0.0;
-      marker.pose.orientation.y = 0.0;
-      marker.pose.orientation.z = 0.0;
-      marker.pose.orientation.w = 1.5;
-      marker_pub.publish(marker);
-    }
-// %Tag(SLEEP_END)%
-    r.sleep();
-  }
-// %EndTag(SLEEP_END)%
-}
 
-// %EndTag(FULLTEXT)%
+    ROS_INFO("Subscriber successfully");
+    marker_pub.publish(marker);
+    
+  }
+  void odomCallback(const nav_msgs::Odometry::ConstPtr &msg) {
+    float x_pose             = msg->pose.pose.position.x;
+    float y_pose            = msg->pose.pose.position.y;
+    float x_scale           = marker.scale.x;
+    float y_scale           = marker.scale.y;
+
+    if ((-x_pose < (init[1] + x_scale)) && (-x_pose > (init[1] - x_scale)) && (y_pose < (init[0] + y_scale)) && (y_pose > (init[0] -y_scale))) {
+      ROS_INFO("Goal reached");
+      ros::Duration(0.5).sleep();
+
+      marker.action = visualization_msgs::Marker::DELETE;
+      ROS_INFO("Delete object");
+      marker_pub.publish(marker);    
+    }
+      else if ((-x_pose < (end[1]+ 0.6)) && (-x_pose > (end[1] - 0.6)) && (y_pose < (end[0] + 0.6))) {
+        ROS_INFO("Reached End Goal");
+        ros::Duration(2).sleep();
+
+        marker.pose.position.x = end[0];
+        marker.pose.position.y = end[1];
+        marker.action = visualization_msgs::Marker::ADD;
+
+        marker_pub.publish(marker);
+        
+      }
+    }
+};
+
+
+int main( int argc, char** argv )
+{
+
+  ros::init(argc, argv, "add_markers");
+  
+  AddMarker add_marker;
+  ros::spin();
+
+  return 0; 
+}
