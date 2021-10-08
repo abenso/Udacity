@@ -98,3 +98,5 @@ $ ./home_service.sh
 ```
 
 An item (represented by a green cube) will show up in Rviz. The robot will navigate to the item, at which point it will disappear (indicating it has been picked up), and then the robot will navigate to another point and drop off the item, at which point the item will reappear.
+
+![alt-text](Project5/images/home_service.gif)
