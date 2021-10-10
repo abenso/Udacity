@@ -4,73 +4,21 @@ The Home Service Robot is the final project of the Udacity Robotics Software Eng
 ## Official ROS packages
 This project utilizes the following ROS packages, cloned all of them on October 9, 2021.
 
+
 - [gmapping](http://wiki.ros.org/gmapping): With the gmapping_demo.launch file, you can easily perform SLAM and build a map of the environment with a robot equipped with laser range finder sensors or RGB-D cameras.
 - [turtlebot_teleop](http://wiki.ros.org/turtlebot_teleop): With the keyboard_teleop.launch file, you can manually control a robot using keyboard commands.
 - [turtlebot_rviz_launchers](http://wiki.ros.org/turtlebot_rviz_launchers): With the view_navigation.launch file, you can load a preconfigured rviz workspace.
 - [turtlebot_gazebo](http://wiki.ros.org/turtlebot_gazebo): With the turtlebot_world.launch you can deploy a turtlebot in a gazebo environment by linking the world file to it.
 
-## Package Tree
-```
-    ├──                                # Official ROS packages
-    |
-    ├── slam_gmapping                  # gmapping_demo.launch file
-    │   ├── gmapping
-    │   ├── ...
-    ├── turtlebot                      # keyboard_teleop.launch file
-    │   ├── turtlebot_teleop
-    │   ├── ...
-    ├── turtlebot_interactions         # view_navigation.launch file
-    │   ├── turtlebot_rviz_launchers
-    │   ├── ...
-    ├── turtlebot_simulator            # turtlebot_world.launch file
-    │   ├── turtlebot_gazebo
-    │   ├── ...
-    ├──                                # Your packages and direcotries
-    |
-    ├── map                          # world files
-    │   ├── ...
-    ├── Scripts                   # shell scripts files
-    │   ├── ...
-    ├──RvizConfig                      # rviz configuration files
-    │   ├── ...
-    ├──pick_objects                    # pick_objects C++ node
-    │   ├── src/pick_objects.cpp
-    │   ├── ...
-    ├──add_markers                     # add_marker C++ node
-    │   ├── src/add_markers.cpp
-    │   ├── ...
-    └──
-```
+This ROS Packages allow perform the following functionalities:
+* Localization: ACML algorithm was used provided in turtlebot_simulator package lunching amcl_demo.launch, this package performs Advanced Monte Carlo Localization, an algorithm that uses particle filters to locate our robot. 
+* Mapping: The gmapping package provides laser-based SLAM (Simultaneous Localization and Mapping), as a ROS node called slam_gmapping. Using slam_gmapping, you can create a 2-D occupancy grid map (like a building floorplan) from laser and pose data collected by a mobile robot.
+In this opportunity, the map created in the before projects was used, so occupancy grid map was created in project “Where Am I?” using ROS package: pgm_map_creator.
 
-## Install Packages
-```
-$ mkdir -p ~/catkin_ws/src
-$ cd ~/catkin_ws/src
-$ catkin_init_workspace
-$ cd ..
-$ catkin_make
-$ sudo apt-get update
-$ cd ~/catkin_ws/src
-$ git clone https://github.com/ros-perception/slam_gmapping
-$ git clone https://github.com/turtlebot/turtlebot
-$ git clone https://github.com/turtlebot/turtlebot_interactions
-$ git clone https://github.com/turtlebot/turtlebot_simulator
-$ cd ~/catkin_ws/
-$ source devel/setup.bash
-$ rosdep -i install gmapping
-#All required rosdeps installed successfully
-$ rosdep -i install turtlebot_teleop
-#All required rosdeps installed successfully
-$ rosdep -i install turtlebot_rviz_launchers
-#All required rosdeps installed successfully
-$ rosdep -i install turtlebot_gazebo
-#All required rosdeps installed successfully
-$ catkin_make
-$ source devel/setup.bash
-```
+* Navigation: This packages implements the Navigation Stack which allows us to send a navigation goal for our robot, the underlying algorithm used for path planning is Dijkstra's Algorithm.
 
 
-
+## Test nodes developed
 ### Part 1: SLAM
 
 The first thing the robot can do is simultaneous localization and mapping (SLAM). To perform SLAM, run the `test_slam.sh` script: This is an example because I used the map created in Project 3 
@@ -91,12 +39,13 @@ In this test you'll see the robot in a completed map in Rviz. Click the "2D Nav 
 
 ### Part 3: Full Service
 
-Now that the world is mapped and the robot can follow commands, the robot can be instructed to pick up and drop off a simulated object at different waypoints. To do this, run the `home_service.sh` script:
+Now that the world is mapped and the robot can follow commands, the robot can be instructed to pick up and drop off a simulated object at different waypoints. 
+First two packages were created: add_markers and pick_objects. The latter will send a message to the robot so it knows its two destinations, both pick-up point and drop-off point. The former will just publish the marker so it can be seen in Rviz before the pick-up and after the drop-off. The add_markers node will be responsible for checking if the virtual object has been picked up by subscribing itself to the /odom topic and validating how near is to the goals. At the same time the environment around the robot will be mapped, the robot will be localized and it will know how to reach each goal by the previously mentioned stacks combined.
+To test this, run the `home_service.sh` script:
+
 
 ```shell
 $ ./home_service.sh
 ```
-
-An item (represented by a green cube) will show up in Rviz. The robot will navigate to the item, at which point it will disappear (indicating it has been picked up), and then the robot will navigate to another point and drop off the item, at which point the item will reappear.
 
 ![alt-text](https://github.com/abenso/Udacity/blob/master/Project5/images/home_service.gif)
